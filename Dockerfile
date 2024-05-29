@@ -1,5 +1,5 @@
-# Usando uma imagem base que já tem Node.js e Python instalados
-FROM tiangolo/node-frontend:10 as build-stage
+# Usar uma imagem base que tem Node.js e Python
+FROM node:14-buster-slim
 
 # Configura o diretório de trabalho
 WORKDIR /app
