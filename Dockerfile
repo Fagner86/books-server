@@ -12,7 +12,7 @@ RUN npm install
 RUN apt-get update && apt-get install -y python3 python3-pip
 
 # Install scikit-learn using pip
-RUN pip3 install --no-cache-dir scikit-learn
+RUN pip install scikit-learn
 
 # Copy the rest of the application code
 COPY . .
