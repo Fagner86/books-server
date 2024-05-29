@@ -6,7 +6,7 @@ COPY package.json .
 COPY package-lock.json .
 
 RUN npm install
-RUN pip install scikit-learn
+
 COPY . .
 
 EXPOSE 8080
