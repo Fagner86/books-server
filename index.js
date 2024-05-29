@@ -94,7 +94,7 @@ app.get('/generateRecommendations/:email', async (req, res) => {
 
     const allBooks = await req.db.collection('books').find({}).toArray();
     const allTitles = allBooks.map(book => book.title);
-
+    console.log("chegou ate o comando")
     const process = spawn('python3', ['generate_recommendations.py', JSON.stringify(readTitles), JSON.stringify(allTitles)]);
 
     let dataString = '';
