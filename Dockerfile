@@ -1,25 +1,28 @@
-FROM node:20
+# Usando uma imagem base que já tem Node.js e Python instalados
+FROM tiangolo/node-frontend:10 as build-stage
 
-# Set the working directory in the container
+# Configura o diretório de trabalho
 WORKDIR /app
 
-# Install Node.js dependencies
-COPY package.json .
-COPY package-lock.json .
+# Copia os arquivos package.json e package-lock.json
+COPY package*.json ./
+
+# Instala as dependências do Node.js
 RUN npm install
 
-# Install Python and required libraries
-RUN apt-get update && apt-get install -y python3 python3-pip
-
-# Install scikit-learn using pip
-RUN pip install scikit-learn
-
-# Copy the rest of the application code
+# Copia o código fonte do Node.js
 COPY . .
 
-# Expose the port the app runs on
+# Instala as dependências do Python
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    pip3 install --no-cache-dir scikit-learn
+
+# Exponha a porta que a aplicação vai rodar
 EXPOSE 4000
 
-# Command to run the application
-CMD ["node", "index.js"]
-# Use the official Python base image
+# Define variáveis de ambiente
+ENV PORT=4000
+
+# Comando para rodar a aplicação
+CMD ["node", "server.js"]
