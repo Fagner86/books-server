@@ -9,6 +9,8 @@ COPY package-lock.json .
 
 # Install Node.js dependencies
 RUN npm install
+# Install Python and required libraries
+RUN apt-get update && apt-get install -y python3
 
 # Copy the rest of the application code
 COPY . .
@@ -16,8 +18,6 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 4000
 
-# Install Python and required libraries
-RUN apt-get update && apt-get install -y python3
 
 # Command to run the application
 CMD ["node", "index.js"]
