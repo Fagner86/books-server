@@ -1,4 +1,4 @@
-# Usar uma imagem base que tem Node.js e Python
+# Use a base image that has Node.js and Python
 FROM node:20
 
 WORKDIR /app
@@ -8,21 +8,20 @@ COPY package-lock.json .
 
 RUN npm install
 
-# Copia o código fonte do Node.js
+# Copy the Node.js source code
 COPY . .
 
-# Instala as dependências do Python
-RUN apt-get update && apt-get install -y python3
-RUN apt-get update && apt-get install -y pip3
+# Install Python and pip
+RUN apt-get update && apt-get install -y python3 python3-pip
+
+# Install scikit-learn
 RUN apt-get update && apt-get install -y scikit-learn
 
-
-# Exponha a porta que a aplicação vai rodar
+# Expose the port that the application will run on
 EXPOSE 4000
 
-# Define variáveis de ambiente
+# Define environment variables
 ENV PORT=4000
 
-# Comando para rodar a aplicação
-
+# Command to run the application
 CMD ["node", "index.js"]
