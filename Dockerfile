@@ -12,7 +12,8 @@ COPY package-lock.json .
 RUN npm install
 
 # Install Python and pip
-RUN apt-get update && apt-get install -y python3 python3-pip3
+RUN apt-get update && apt-get install -y python3
+RUN npm install pip3
 # Install Python dependencies
 RUN pip3 install scikit-learn
 
