@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
 const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -93,7 +95,7 @@ app.get('/generateRecommendations/:email', async (req, res) => {
     const allBooks = await req.db.collection('books').find({}).toArray();
     const allTitles = allBooks.map(book => book.title);
 
-    const process = spawn('python', ['generate_recommendations.py', JSON.stringify(readTitles), JSON.stringify(allTitles)]);
+    const process = spawn('python3', ['generate_recommendations.py', JSON.stringify(readTitles), JSON.stringify(allTitles)]);
 
     let dataString = '';
 
