@@ -1,21 +1,18 @@
-# Use an official Node.js runtime as a parent image
 FROM node:20
 
-# Set the working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Install Node.js dependencies
 COPY package.json .
 COPY package-lock.json .
-
-# Install Node.js dependencies
 RUN npm install
 
-# Install Python and pip
-RUN apt-get update && apt-get install -y python3
-RUN npm install pip3
-# Install Python dependencies
-RUN pip3 install scikit-learn
+# Install Python and required libraries
+RUN apt-get update && apt-get install -y python3 python3-pip
+
+# Install scikit-learn using pip
+RUN pip3 install --no-cache-dir scikit-learn
 
 # Copy the rest of the application code
 COPY . .
@@ -23,5 +20,5 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 4000
 
-# Define the command to run the app
+# Command to run the application
 CMD ["node", "index.js"]
