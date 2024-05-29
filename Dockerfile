@@ -12,10 +12,10 @@ RUN npm install
 COPY . .
 
 # Instala as dependências do Python
-RUN apt-get update && \ 
-    apt-get install -y python3 python3-pip && \
-    python3 -m pip install --upgrade pip && \
-    pip3 install --no-cache-dir scikit-learn
+RUN apt-get update && apt-get install -y python3
+RUN apt-get update && apt-get install -y pip3
+RUN pip3 install scikit-learn
+
 
 # Exponha a porta que a aplicação vai rodar
 EXPOSE 4000
