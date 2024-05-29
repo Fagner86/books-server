@@ -14,7 +14,7 @@ COPY . .
 # Instala as dependências do Python
 RUN apt-get update && apt-get install -y python3
 RUN apt-get update && apt-get install -y pip3
-RUN pip3 install scikit-learn
+RUN apt-get update && apt-get install -y scikit-learn
 
 
 # Exponha a porta que a aplicação vai rodar
