@@ -5,7 +5,8 @@ FROM node:14-slim
 WORKDIR /app
 
 # Copia os arquivos package.json e package-lock.json
-COPY package*.json ./
+COPY package.json .
+COPY package-lock.json .
 
 # Instala as dependências do Node.js
 RUN npm install
