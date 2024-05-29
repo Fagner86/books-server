@@ -4,7 +4,12 @@ FROM node:20
 WORKDIR /app
 
 # Install Python and required libraries
-RUN apt-get update && apt-get install -y python3 python3-pip
+RUN apt-get update && apt-get install -y python3 python3-pip python3-dev build-essential
+
+# Install additional dependencies required for scikit-learn
+RUN apt-get install -y libatlas-base-dev gfortran
+
+# Install scikit-learn
 RUN pip3 install --no-cache-dir scikit-learn
 
 # Copy the package.json and package-lock.json files
