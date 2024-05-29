@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
+const { spawn } = require('child_process');
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -68,6 +69,66 @@ app.get('/booksread/:email', async (req, res) => {
   } catch (error) {
     console.error("Erro ao buscar livros lidos:", error);
     res.status(500).json({ error: "Erro ao buscar livros lidos." });
+  }
+});
+
+app.get('/books_titulo', async (req, res) => {
+  const { title } = req.query;
+  try {
+    const book = await req.db.collection('books').findOne({ title });
+    res.json(book ? [book] : []);
+  } catch (error) {
+    console.error("Erro ao buscar livro:", error);
+    res.status(500).json({ error: "Erro ao buscar livro." });
+  }
+});
+
+app.get('/generateRecommendations/:email', async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    const booksRead = await req.db.collection(`booksread_${email}`).find({}).toArray();
+    const readTitles = booksRead.map(book => book.title);
+
+    const allBooks = await req.db.collection('books').find({}).toArray();
+    const allTitles = allBooks.map(book => book.title);
+
+    const process = spawn('python', ['generate_recommendations.py', JSON.stringify(readTitles), JSON.stringify(allTitles)]);
+
+    let dataString = '';
+
+    process.stdout.on('data', (data) => {
+      dataString += data.toString();
+    });
+
+    process.stdout.on('end', () => {
+      try {
+        const recommendations = JSON.parse(dataString.replace(/'/g, '"'));
+        res.json({ suggestions: recommendations });
+      } catch (error) {
+        console.error(`Erro ao parsear dados: ${error}`);
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Erro ao gerar recomendações." });
+        }
+      }
+    });
+
+    process.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Erro ao gerar recomendações." });
+      }
+    });
+
+    process.on('close', (code) => {
+      console.log(`Processo finalizado com código ${code}`);
+    });
+
+  } catch (error) {
+    console.error(`Erro ao buscar dados: ${error}`);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Erro ao buscar dados." });
+    }
   }
 });
 
