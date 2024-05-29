@@ -25,4 +25,4 @@ EXPOSE 4000
 ENV PORT=4000
 
 # Comando para rodar a aplicação
-CMD ["node", "server.js"]
+CMD ["node", "index.js"]
