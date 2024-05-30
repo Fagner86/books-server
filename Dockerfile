@@ -23,4 +23,4 @@ RUN /app/venv/bin/pip install scikit-learn
 COPY . .
 
 # Ensure the virtual environment is activated and the application is started
-CMD ["/bin/bash", "-c", "source /app/venv/bin/activate && npm start"]
+CMD ["/bin/bash", "-c", "source /app/venv/bin/activate && node index.js"]
