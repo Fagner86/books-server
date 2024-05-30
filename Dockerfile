@@ -10,14 +10,17 @@ COPY package-lock.json .
 # Install node dependencies
 RUN npm install
 
-# Install Python and pip
-RUN apt-get update && apt-get install -y python3 python3-pip
+# Install Python, pip, and venv
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv
 
-# Install Python dependencies
-RUN pip install scikit-learn
+# Create a virtual environment
+RUN python3 -m venv /app/venv
+
+# Activate the virtual environment and install Python dependencies
+RUN /app/venv/bin/pip install scikit-learn
 
 # Copy the rest of the application code
 COPY . .
 
-# Run the application
-CMD ["npm", "start"]
+# Ensure the virtual environment is activated and the application is started
+CMD ["/bin/bash", "-c", "source /app/venv/bin/activate && npm start"]
