@@ -12,7 +12,7 @@ RUN npm install
 COPY . .
 
 # Install Python and pip
-RUN apt-get update && apt-get install -y python3 python3-pip
+RUN apt-get update && apt-get install -y python3
 
 # Expose the port that the application will run on
 EXPOSE 4000
