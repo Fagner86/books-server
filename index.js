@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb'); // Importe ObjectId aqui
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -133,6 +133,24 @@ app.get('/generateRecommendations/:email', async (req, res) => {
     }
   }
 });
+
+// Adicionar a rota DELETE para excluir um livro
+app.delete('/books/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await req.db.collection('books').deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 1) {
+      res.status(200).json({ message: 'Livro excluído com sucesso.' });
+    } else {
+      res.status(404).json({ error: 'Livro não encontrado.' });
+    }
+  } catch (error) {
+    console.error('Erro ao excluir o livro:', error);
+    res.status(500).json({ error: 'Erro ao excluir o livro.' });
+  }
+});
+
+
 
 
 app.listen(port, () => {
