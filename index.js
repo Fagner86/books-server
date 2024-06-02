@@ -10,9 +10,9 @@ const port = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json()); // Add this line to parse JSON data
 
+
 const uri = process.env.URL;
 const client = new MongoClient(uri);
-
 app.use(async (req, res, next) => {
   try {
     await client.connect();
@@ -139,6 +139,20 @@ app.delete('/books/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await req.db.collection('books').deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 1) {
+      res.status(200).json({ message: 'Livro excluído com sucesso.' });
+    } else {
+      res.status(404).json({ error: 'Livro não encontrado.' });
+    }
+  } catch (error) {
+    console.error('Erro ao excluir o livro:', error);
+    res.status(500).json({ error: 'Erro ao excluir o livro.' });
+  }
+});app.delete('/booksread/:email/:id', async (req, res) => {
+  const { email, id } = req.params;
+  
+  try {
+    const result = await req.db.collection(`booksread_${email}`).deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 1) {
       res.status(200).json({ message: 'Livro excluído com sucesso.' });
     } else {
