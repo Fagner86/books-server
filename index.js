@@ -11,6 +11,7 @@ app.use(cors());
 app.use(express.json()); // Add this line to parse JSON data
 
 
+
 const uri = process.env.URL;
 const client = new MongoClient(uri);
 app.use(async (req, res, next) => {
@@ -48,18 +49,19 @@ app.post('/books', async (req, res) => {
 
 
 // Nova rota para adicionar livros lidos
+// Nova rota para adicionar livros lidos
 app.post('/booksread', async (req, res) => {
-    const { email, book } = req.body;
-    try {
-      const { title, author, description, image, genre } = book; // Extrair os campos do livro
-      const bookData = { title, author, description, image, genre }; // Criar um novo objeto livro com esses campos
-      await req.db.collection(`booksread_${email}`).insertOne(bookData);
-      res.status(201).json(bookData);
-    } catch (error) {
-      console.error("Erro ao adicionar um novo livro ao acervo:", error);
-      res.status(500).json({ error: "Erro ao adicionar um novo livro ao acervo." });
-    }
-  });
+  const { email, book } = req.body;
+  try {
+    const {refIdBook,title, author, description, image, genre } = book; // Extrair os campos do livro
+    const bookData = {refIdBook, title, author, description, image, genre }; // Criar um novo objeto livro com esses campos
+    await req.db.collection(`booksread_${email}`).insertOne(bookData);
+    res.status(201).json(bookData);
+  } catch (error) {
+    console.error("Erro ao adicionar um novo livro ao acervo:", error);
+    res.status(500).json({ error: "Erro ao adicionar um novo livro ao acervo." });
+  }
+});
   
 
 // Nova rota para buscar livros lidos por um usuário
@@ -83,19 +85,44 @@ app.get('/books_titulo', async (req, res) => {
     console.error("Erro ao buscar livro:", error);
     res.status(500).json({ error: "Erro ao buscar livro." });
   }
-});
-
-app.get('/generateRecommendations/:email', async (req, res) => {
+});app.get('/generateRecommendations/:email', async (req, res) => {
   const { email } = req.params;
 
   try {
+    // Buscar todos os livros lidos pelo usuário
     const booksRead = await req.db.collection(`booksread_${email}`).find({}).toArray();
+   
+    if (booksRead.length === 0) {
+      return res.json({ suggestions: [] });
+    }
+    // Extrair os IDs dos livros lidos e convertê-los para ObjectId
+    const readBookIds = booksRead.map(book => new ObjectId(book.refIdBook));
+
+    // Buscar todos os livros disponíveis
+    const allBooks = await req.db.collection('books').find({}).toArray();
+
+    if (allBooks.length === 0) {
+      return res.json({ suggestions: [] });
+    }
+    // Filtrar os livros lidos dos livros disponíveis
+    const unreadBooks = allBooks.filter(book => !readBookIds.some(readId => readId.equals(book._id)));
+    const unreadTitles = unreadBooks.map(book => book.title);
+
+    // Se não houver livros não lidos, retornar uma resposta vazia
+    if (unreadTitles.length === 0) {
+      return res.json({ suggestions: [] });
+    }
+
     const readTitles = booksRead.map(book => book.title);
 
-    const allBooks = await req.db.collection('books').find({}).toArray();
-    const allTitles = allBooks.map(book => book.title);
-    console.log("chegou ate o comando")
-    const process = spawn('python3', ['generate_recommendations.py', JSON.stringify(readTitles), JSON.stringify(allTitles)]);
+    // Se não houver títulos lidos, também retornar uma resposta vazia
+    if (readTitles.length === 0) {
+      return res.json({ suggestions: [] });
+    }
+
+    console.log("Chegou até o comando");
+
+    const process = spawn('python3', ['generate_recommendations.py', JSON.stringify(readTitles), JSON.stringify(unreadTitles)]);
 
     let dataString = '';
 
