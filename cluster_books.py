@@ -22,25 +22,27 @@ def transform_data(categories):
     X = vectorizer.fit_transform(categories)
     return X
 
-def cluster_books(X, book_ids, num_clusters):
+def cluster_books(X, book_ids, categories, num_clusters):
     # Aplica o algoritmo K-Means para agrupar os livros
     model = KMeans(n_clusters=num_clusters, random_state=42)
     model.fit(X)
 
     labels = model.labels_
-    clusters = {i: [] for i in range(num_clusters)}
+    clusters = {i: {'ids': [], 'categories': []} for i in range(num_clusters)}
     
     for idx, label in enumerate(labels):
-        clusters[label].append(book_ids[idx])
+        clusters[label]['ids'].append(book_ids[idx])
+        clusters[label]['categories'].append(categories[idx])
     
     return clusters
 
-def evaluate_clusters(clusters):
-    # Avalia os clusters gerados
-    evaluation = {}
-    for cluster_id, books in clusters.items():
-        evaluation[cluster_id] = len(books)
-    return evaluation
+def get_representative_category(categories):
+    # Obtém a categoria mais representativa de uma lista de categorias
+    from collections import Counter
+    most_common = Counter(categories).most_common(1)
+    if most_common:
+        return most_common[0][0]
+    return "Unknown"
 
 def main():
     # Carrega os livros do argumento da linha de comando
@@ -60,17 +62,19 @@ def main():
     num_clusters = len(unique_genres)
     
     # Mineração
-    clusters = cluster_books(X, book_ids, num_clusters)
+    clusters = cluster_books(X, book_ids, categories, num_clusters)
     
     # Remover duplicatas dentro dos clusters
-    for cluster_id, books in clusters.items():
-        clusters[cluster_id] = list(set(books))
+    for cluster_id, cluster_data in clusters.items():
+        cluster_data['ids'] = list(set(cluster_data['ids']))
+        cluster_data['categories'] = list(set(cluster_data['categories']))
     
     # Adicionar nome da categoria na frente do número do cluster
     labeled_clusters = {}
-    for cluster_id, books in clusters.items():
-        labeled_cluster_name = f"Cluster {cluster_id}"
-        labeled_clusters[labeled_cluster_name] = books
+    for cluster_id, cluster_data in clusters.items():
+        representative_category = get_representative_category(cluster_data['categories'])
+        labeled_cluster_name = f"{representative_category} Cluster {cluster_id}"
+        labeled_clusters[labeled_cluster_name] = cluster_data['ids']
     
     # Apresentação do conhecimento
     print(json.dumps(labeled_clusters))
