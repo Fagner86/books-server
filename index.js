@@ -12,7 +12,7 @@ app.use(express.json()); // Add this line to parse JSON data
 
 
 
-const uri = process.env.URL;
+const uri = "mongodb+srv://trabalhobancodados:DoXnPeOux5FZgnu5@cluster0.jiqhawy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(uri);
 app.use(async (req, res, next) => {
   try {
@@ -47,6 +47,7 @@ app.post('/books', async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 // Nova rota para adicionar livros lidos
 app.post('/booksread', async (req, res) => {
   const { email, book } = req.body;
@@ -117,6 +118,8 @@ app.delete('/booksread/:email/:id', async (req, res) => {
   }
 });
 
+=======
+>>>>>>> 8421e567bdb7ac13ace21b194f46d56cbd957c82
 
 app.get('/generateRecommendations/:email', async (req, res) => {
   const { email } = req.params;
@@ -232,8 +235,11 @@ app.get('/clusterBooks', async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 8421e567bdb7ac13ace21b194f46d56cbd957c82
 app.listen(port, () => {
   console.log(`Servidor está rodando em http://localhost:${port}`);
 });
