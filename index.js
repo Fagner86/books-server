@@ -12,7 +12,7 @@ app.use(express.json()); // Add this line to parse JSON data
 
 
 
-const uri = process.env.URL;
+const uri = "mongodb+srv://trabalhobancodados:DoXnPeOux5FZgnu5@cluster0.jiqhawy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(uri);
 app.use(async (req, res, next) => {
   try {
@@ -48,44 +48,7 @@ app.post('/books', async (req, res) => {
 });
 
 
-// Nova rota para adicionar livros lidos
-// Nova rota para adicionar livros lidos
-app.post('/booksread', async (req, res) => {
-  const { email, book } = req.body;
-  try {
-    const {refIdBook,title, author, description, image, genre } = book; // Extrair os campos do livro
-    const bookData = {refIdBook, title, author, description, image, genre }; // Criar um novo objeto livro com esses campos
-    await req.db.collection(`booksread_${email}`).insertOne(bookData);
-    res.status(201).json(bookData);
-  } catch (error) {
-    console.error("Erro ao adicionar um novo livro ao acervo:", error);
-    res.status(500).json({ error: "Erro ao adicionar um novo livro ao acervo." });
-  }
-});
-  
-
-// Nova rota para buscar livros lidos por um usuário
-app.get('/booksread/:email', async (req, res) => {
-  const { email } = req.params;
-  try {
-    const booksRead = await req.db.collection(`booksread_${email}`).find({}).toArray();
-    res.json(booksRead);
-  } catch (error) {
-    console.error("Erro ao buscar livros lidos:", error);
-    res.status(500).json({ error: "Erro ao buscar livros lidos." });
-  }
-});
-
-app.get('/books_titulo', async (req, res) => {
-  const { title } = req.query;
-  try {
-    const book = await req.db.collection('books').findOne({ title });
-    res.json(book ? [book] : []);
-  } catch (error) {
-    console.error("Erro ao buscar livro:", error);
-    res.status(500).json({ error: "Erro ao buscar livro." });
-  }
-});app.get('/generateRecommendations/:email', async (req, res) => {
+app.get('/generateRecommendations/:email', async (req, res) => {
   const { email } = req.params;
 
   try {
@@ -161,38 +124,43 @@ app.get('/books_titulo', async (req, res) => {
   }
 });
 
-// Adicionar a rota DELETE para excluir um livro
-app.delete('/books/:id', async (req, res) => {
-  const { id } = req.params;
+
+app.get('/clusterBooks', async (req, res) => {
   try {
-    const result = await req.db.collection('books').deleteOne({ _id: new ObjectId(id) });
-    if (result.deletedCount === 1) {
-      res.status(200).json({ message: 'Livro excluído com sucesso.' });
-    } else {
-      res.status(404).json({ error: 'Livro não encontrado.' });
-    }
+    const books = await req.db.collection('books').find({}).toArray();
+    const process = spawn('python3', ['cluster_books.py', JSON.stringify(books)]);
+
+    let dataString = '';
+
+    process.stdout.on('data', (data) => {
+      dataString += data.toString();
+    });
+
+    process.stdout.on('end', () => {
+      try {
+        const clusters = JSON.parse(dataString);
+        console.log("os clusters", clusters);
+        res.json(clusters);
+      } catch (error) {
+        console.error(`Erro ao parsear dados: ${error}`);
+        res.status(500).json({ error: "Erro ao agrupar livros." });
+      }
+    });
+
+    process.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+      res.status(500).json({ error: "Erro ao agrupar livros." });
+    });
+
+    process.on('close', (code) => {
+      console.log(`Processo finalizado com código ${code}`);
+    });
+
   } catch (error) {
-    console.error('Erro ao excluir o livro:', error);
-    res.status(500).json({ error: 'Erro ao excluir o livro.' });
-  }
-});app.delete('/booksread/:email/:id', async (req, res) => {
-  const { email, id } = req.params;
-  
-  try {
-    const result = await req.db.collection(`booksread_${email}`).deleteOne({ _id: new ObjectId(id) });
-    if (result.deletedCount === 1) {
-      res.status(200).json({ message: 'Livro excluído com sucesso.' });
-    } else {
-      res.status(404).json({ error: 'Livro não encontrado.' });
-    }
-  } catch (error) {
-    console.error('Erro ao excluir o livro:', error);
-    res.status(500).json({ error: 'Erro ao excluir o livro.' });
+    console.error(`Erro ao buscar dados: ${error}`);
+    res.status(500).json({ error: "Erro ao buscar dados." });
   }
 });
-
-
-
 
 app.listen(port, () => {
   console.log(`Servidor está rodando em http://localhost:${port}`);
