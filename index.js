@@ -194,7 +194,6 @@ app.get('/generateRecommendations/:email', async (req, res) => {
   }
 });
 
-
 app.get('/clusterBooks', async (req, res) => {
   try {
     const books = await req.db.collection('books').find({}).toArray();
@@ -231,6 +230,7 @@ app.get('/clusterBooks', async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar dados." });
   }
 });
+
 app.listen(port, () => {
   console.log(`Servidor está rodando em http://localhost:${port}`);
 });

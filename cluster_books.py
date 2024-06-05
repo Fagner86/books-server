@@ -10,11 +10,11 @@ def selection(books):
 def preprocess_books(books):
     # Pré-processa os dados dos livros para extração de features
     categories = []
-    book_titles = []
+    book_ids = []
     for book in books:
         categories.append(", ".join(book['categories']))  # Concatena as categorias em uma string
-        book_titles.append(book['title'])
-    return categories, book_titles
+        book_ids.append(str(book['_id']))
+    return categories, book_ids
 
 def transform_data(categories):
     # Transforma as categorias dos livros em vetores TF-IDF
@@ -22,7 +22,7 @@ def transform_data(categories):
     X = vectorizer.fit_transform(categories)
     return X
 
-def cluster_books(X, book_titles, num_clusters=5):
+def cluster_books(X, book_ids, num_clusters):
     # Aplica o algoritmo K-Means para agrupar os livros
     model = KMeans(n_clusters=num_clusters, random_state=42)
     model.fit(X)
@@ -31,7 +31,7 @@ def cluster_books(X, book_titles, num_clusters=5):
     clusters = {i: [] for i in range(num_clusters)}
     
     for idx, label in enumerate(labels):
-        clusters[label].append(book_titles[idx])
+        clusters[label].append(book_ids[idx])
     
     return clusters
 
@@ -50,24 +50,26 @@ def main():
     selected_books = selection(books)
     
     # Pré-processamento
-    categories, book_titles = preprocess_books(selected_books)
+    categories, book_ids = preprocess_books(selected_books)
     
     # Transformação
     X = transform_data(categories)
     
+    # Determina o número de clusters com base nos gêneros únicos
+    unique_genres = set(categories)
+    num_clusters = len(unique_genres)
+    
     # Mineração
-    clusters = cluster_books(X, book_titles)
+    clusters = cluster_books(X, book_ids, num_clusters)
     
     # Remover duplicatas dentro dos clusters
     for cluster_id, books in clusters.items():
         clusters[cluster_id] = list(set(books))
     
     # Adicionar nome da categoria na frente do número do cluster
-    category_set = set(categories)
     labeled_clusters = {}
     for cluster_id, books in clusters.items():
-        cluster_category = category_set.pop()  # Remove uma categoria do conjunto
-        labeled_cluster_name = f"{cluster_category} Cluster {cluster_id}"
+        labeled_cluster_name = f"Cluster {cluster_id}"
         labeled_clusters[labeled_cluster_name] = books
     
     # Apresentação do conhecimento
