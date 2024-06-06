@@ -122,38 +122,42 @@ app.get('/generateRecommendations/:email', async (req, res) => {
   const { email } = req.params;
 
   try {
-    // Buscar todos os livros lidos pelo usuário
     const booksRead = await req.db.collection(`booksread_${email}`).find({}).toArray();
-   
+
     if (booksRead.length === 0) {
       return res.json({ suggestions: [] });
     }
-    // Extrair os IDs dos livros lidos e convertê-los para ObjectId
-    const readBookIds = booksRead.map(book => new ObjectId(book.refIdBook));
 
-    // Buscar todos os livros disponíveis
+    const readBookIds = booksRead.map(book => new ObjectId(book.refIdBook));
     const allBooks = await req.db.collection('books').find({}).toArray();
 
     if (allBooks.length === 0) {
       return res.json({ suggestions: [] });
     }
-    // Filtrar os livros lidos dos livros disponíveis
-    const unreadBooks = allBooks.filter(book => !readBookIds.some(readId => readId.equals(book._id)));
-    const unreadTitles = unreadBooks.map(book => book.title);
 
-    // Se não houver livros não lidos, retornar uma resposta vazia
-    if (unreadTitles.length === 0) {
+    const unreadBooks = allBooks.filter(book => !readBookIds.some(readId => readId.equals(book._id)));
+
+    if (unreadBooks.length === 0) {
       return res.json({ suggestions: [] });
     }
 
-    const readTitles = booksRead.map(book => book.title);
+    const readTitles = booksRead.map(book => ({
+      title: book.title || null,
+      author: book.author || null,
+      genre: book.genre || null
+    }));
 
-    // Se não houver títulos lidos, também retornar uma resposta vazia
+    const unreadTitles = unreadBooks.map(book => ({
+      title: book.title || null,
+      author: book.authors || null,
+      genre: book.categories || null
+    }));
+
     if (readTitles.length === 0) {
       return res.json({ suggestions: [] });
     }
 
-    console.log("Chegou até o comando");
+    console.log("Chegou até o comando e os dados passados de unreadTitles sao: ",unreadTitles);
 
     const process = spawn('python3', ['generate_recommendations.py', JSON.stringify(readTitles), JSON.stringify(unreadTitles)]);
 
@@ -165,34 +169,29 @@ app.get('/generateRecommendations/:email', async (req, res) => {
 
     process.stdout.on('end', () => {
       try {
-        const recommendations = JSON.parse(dataString.replace(/'/g, '"'));
+        const recommendations = JSON.parse(dataString.replace(/'/g, '"')); // substitui apóstrofos por aspas duplas
         res.json({ suggestions: recommendations });
       } catch (error) {
-        console.error(`Erro ao parsear dados: ${error}`);
-        if (!res.headersSent) {
-          res.status(500).json({ error: "Erro ao gerar recomendações." });
-        }
-      }
-    });
-
-    process.stderr.on('data', (data) => {
-      console.error(`stderr: ${data}`);
-      if (!res.headersSent) {
+        console.error(`Erro ao parsear dados: ${error.message}`);
         res.status(500).json({ error: "Erro ao gerar recomendações." });
       }
     });
 
+    process.stderr.on('data', (data) => {
+      console.error(`stderr: ${data.toString()}`);
+      res.status(500).json({ error: "Erro ao gerar recomendações." });
+    });
     process.on('close', (code) => {
       console.log(`Processo finalizado com código ${code}`);
     });
 
   } catch (error) {
-    console.error(`Erro ao buscar dados: ${error}`);
-    if (!res.headersSent) {
-      res.status(500).json({ error: "Erro ao buscar dados." });
-    }
+    console.error(`Erro ao buscar dados: ${error.message}`);
+    res.status(500).json({ error: "Erro ao buscar dados." });
   }
 });
+
+
 
 app.get('/clusterBooks', async (req, res) => {
   try {
